@@ -12,11 +12,9 @@ use Illuminate\Http\Request;
 
 use App\Http\Controllers\LoginController;
 
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login.login');
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
 Route::get('/logout', [LoginController::class, 'logout'])->name('logout');
-Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
 
 Route::get('/portal', function () {
