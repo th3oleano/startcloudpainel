@@ -26,7 +26,7 @@ Route::get('/portal', function () {
 
 // Redirecionamento para a página de login
 Route::get('/', function () {
-    return redirect()->route('login.login');
+    return redirect()->route('login');
 });
 
 // Rota de dashboard
