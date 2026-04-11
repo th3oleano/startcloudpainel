@@ -1,36 +1,52 @@
-# Usar a imagem base com PHP e Composer já instalados
-FROM php:8.3-cli-alpine
+FROM php:8.2-fpm
 
-# Definir o diretório de trabalho
-WORKDIR /var/www
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    zip \
+    curl \
+    libzip-dev \
+    libpng-dev \
+    libxml2-dev \
+    libonig-dev \
+    libjpeg-dev \
+    libfreetype6-dev
 
-# Copiar composer.json e composer.lock para o diretório de trabalho
-COPY composer.json composer.lock ./
+# Configurar GD corretamente
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
-# Copiar o restante da aplicação (incluindo o arquivo artisan)
-COPY . .
-
-# Instalar as dependências do sistema e extensões PHP necessárias para Laravel
-RUN apk add --no-cache \
-        bash \
-        curl \
-        git \
-        zip \
-        unzip \
-        libpng-dev \
-        libjpeg-turbo-dev \
-        freetype-dev \
-        postgresql-dev \
-        libzip-dev \
-    && docker-php-ext-configure gd --with-jpeg --with-freetype \
-    && docker-php-ext-install gd pdo pdo_pgsql zip
-
+# Instalar extensões PHP necessárias
+RUN docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    mbstring \
+    bcmath \
+    gd \
+    zip \
+    xml \
+    fileinfo
 
 # Instalar Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Instalar dependências do Composer
+# Evitar erro de memória
+ENV COMPOSER_MEMORY_LIMIT=-1
+
+# Diretório da aplicação
+WORKDIR /var/www
+
+# Copiar arquivos
+COPY . .
+
+# Permissões (importante pro Laravel)
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# Instalar dependências
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-# Rodar o servidor embutido do Laravel (serve) e aceitar conexões de qualquer IP, usando a porta 8000
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Expor porta
+EXPOSE 9000
+
+CMD ["php-fpm"]

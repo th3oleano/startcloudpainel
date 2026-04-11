@@ -1,33 +1,31 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
     build: .
-    container_name: app
+    container_name: laravel_app
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - ./:/var/www
+      - .:/var/www
     networks:
-      - app-network
+      - laravel
 
   webserver:
     image: nginx:alpine
-    container_name: webserver
+    container_name: laravel_nginx
     restart: unless-stopped
     ports:
       - "8080:80"
     volumes:
-      - ./:/var/www
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
-    depends_on:
-      - app
+      - .:/var/www
+      - ./nginx:/etc/nginx/conf.d
     networks:
-      - app-network
+      - laravel
 
   db:
     image: mysql:8.0
-    container_name: db
+    container_name: laravel_db
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: laravel
@@ -36,23 +34,8 @@ services:
       MYSQL_USER: laravel
     ports:
       - "3306:3306"
-    volumes:
-      - dbdata:/var/lib/mysql
     networks:
-      - app-network
-
-  redis:
-    image: redis:alpine
-    container_name: redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    networks:
-      - app-network
-
-volumes:
-  dbdata:
+      - laravel
 
 networks:
-  app-network:
-    driver: bridge
+  laravel:
